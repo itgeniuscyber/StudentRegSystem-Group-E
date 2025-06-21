@@ -11,10 +11,11 @@ import java.sql.*;
 import java.io.File;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.util.regex.Pattern;
+import javax.swing.border.Border;
 
 public class StudentRegSystem extends JFrame {
     private JTextField txtRegId, txtName, txtFaculty, txtProjectTitle, txtContact, txtEmail, txtImagePath;
-    private JButton btnRegister, btnSearch, btnUpdate, btnDelete, btnClear, btnExit, btnBrowse;
+    private JButton btnRegister, btnSearch, btnUpdate, btnDelete, btnClear, btnExit, btnBrowse, btnViewAll;
     private JLabel lblImage;
     private static final String DB_URL = "jdbc:ucanaccess://VUE_Exhibition.accdb";
     
@@ -23,68 +24,154 @@ public class StudentRegSystem extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
         
-        // Form Panel
-        JPanel formPanel = new JPanel(new GridLayout(8, 2, 5, 5));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Set modern look and feel
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         
-        formPanel.add(new JLabel("Registration ID:"));
-        txtRegId = new JTextField();
-        formPanel.add(txtRegId);
+        // Welcome Panel with Inspirational Message
+        JPanel welcomePanel = new JPanel();
+        welcomePanel.setBackground(new Color(51, 153, 255));
+        welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
+        welcomePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        formPanel.add(new JLabel("Student Name:"));
-        txtName = new JTextField();
-        formPanel.add(txtName);
+        JLabel welcomeLabel = new JLabel("Welcome to VU Innovation Exhibition!");
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        welcomeLabel.setForeground(Color.WHITE);
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        formPanel.add(new JLabel("Faculty:"));
-        txtFaculty = new JTextField();
-        formPanel.add(txtFaculty);
+        JLabel inspireLabel = new JLabel("Showcase Your Innovation, Shape the Future!");
+        inspireLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+        inspireLabel.setForeground(Color.WHITE);
+        inspireLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        formPanel.add(new JLabel("Project Title:"));
-        txtProjectTitle = new JTextField();
-        formPanel.add(txtProjectTitle);
+        welcomePanel.add(welcomeLabel);
+        welcomePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        welcomePanel.add(inspireLabel);
         
-        formPanel.add(new JLabel("Contact Number:"));
-        txtContact = new JTextField();
-        formPanel.add(txtContact);
+        // Form Panel with modern styling
+        JPanel formPanel = new JPanel(new GridLayout(8, 2, 15, 15));
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(25, 25, 25, 25),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(51, 153, 255), 2, true),
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)
+            )
+        ));
+        formPanel.setBackground(Color.WHITE);
         
-        formPanel.add(new JLabel("Email Address:"));
-        txtEmail = new JTextField();
-        formPanel.add(txtEmail);
+        // Create and style form labels and fields
+        JLabel[] labels = {
+            createStyledLabel("Registration ID:"),
+            createStyledLabel("Student Name:"),
+            createStyledLabel("Faculty:"),
+            createStyledLabel("Project Title:"),
+            createStyledLabel("Contact Number:"),
+            createStyledLabel("Email Address:")
+        };
         
-        formPanel.add(new JLabel("Project Image:"));
+        txtRegId = createStyledTextField();
+        txtName = createStyledTextField();
+        txtFaculty = createStyledTextField();
+        txtProjectTitle = createStyledTextField();
+        txtContact = createStyledTextField();
+        txtEmail = createStyledTextField();
+        
+        // Add labels and fields to form
+        for (int i = 0; i < labels.length; i++) {
+            formPanel.add(labels[i]);
+            JTextField field = i == 0 ? txtRegId :
+                             i == 1 ? txtName :
+                             i == 2 ? txtFaculty :
+                             i == 3 ? txtProjectTitle :
+                             i == 4 ? txtContact :
+                             txtEmail;
+            formPanel.add(field);
+        }
+        
+        // Style image selection components
+        formPanel.add(createStyledLabel("Project Image:"));
         JPanel imagePanel = new JPanel(new BorderLayout(5, 0));
-        txtImagePath = new JTextField();
+        imagePanel.setBackground(Color.WHITE);
+        
+        txtImagePath = createStyledTextField();
         txtImagePath.setEditable(false);
-        btnBrowse = new JButton("Browse");
+        btnBrowse = createStyledButton("Browse", new Color(52, 152, 219));
+        
         imagePanel.add(txtImagePath, BorderLayout.CENTER);
         imagePanel.add(btnBrowse, BorderLayout.EAST);
         formPanel.add(imagePanel);
         
-        // Image display area
-        lblImage = new JLabel();
-        lblImage.setPreferredSize(new Dimension(200, 200));
-        lblImage.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        // Image preview panel with title
+        JPanel imagePreviewPanel = new JPanel(new BorderLayout(5, 10));
+        imagePreviewPanel.setBackground(Color.WHITE);
+        imagePreviewPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(0, 10, 0, 0),
+            BorderFactory.createLineBorder(new Color(51, 153, 255), 1, true)
+        ));
+
+        JLabel previewLabel = new JLabel("Image Preview");
+        previewLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        previewLabel.setForeground(new Color(51, 153, 255));
+        previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        previewLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         
-        // Button Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        btnRegister = new JButton("Register");
-        btnSearch = new JButton("Search");
-        btnUpdate = new JButton("Update");
-        btnDelete = new JButton("Delete");
-        btnClear = new JButton("Clear");
-        btnExit = new JButton("Exit");
+        lblImage = new JLabel("No Image Selected", SwingConstants.CENTER);
+        lblImage.setPreferredSize(new Dimension(250, 250));
+        lblImage.setFont(new Font("Arial", Font.ITALIC, 12));
+        lblImage.setForeground(new Color(150, 150, 150));
+        lblImage.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        imagePreviewPanel.add(previewLabel, BorderLayout.NORTH);
+        imagePreviewPanel.add(lblImage, BorderLayout.CENTER);
+        
+        // Button Panel with modern styling
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.setBackground(new Color(240, 240, 240));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        btnRegister = createStyledButton("Register", new Color(46, 204, 113));
+        btnSearch = createStyledButton("Search", new Color(52, 152, 219));
+        btnUpdate = createStyledButton("Update", new Color(155, 89, 182));
+        btnDelete = createStyledButton("Delete", new Color(231, 76, 60));
+        btnViewAll = createStyledButton("View All", new Color(52, 152, 219));
+        btnClear = createStyledButton("Clear", new Color(149, 165, 166));
+        btnExit = createStyledButton("Exit", new Color(149, 165, 166));
         
         buttonPanel.add(btnRegister);
         buttonPanel.add(btnSearch);
         buttonPanel.add(btnUpdate);
         buttonPanel.add(btnDelete);
+        buttonPanel.add(btnViewAll);
         buttonPanel.add(btnClear);
         buttonPanel.add(btnExit);
         
+        // Copyright Panel
+        JPanel copyrightPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        copyrightPanel.setBackground(new Color(240, 240, 240));
+        JLabel copyrightLabel = new JLabel("© 2025 System Designed by Group E");
+        copyrightLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        copyrightLabel.setForeground(new Color(100, 100, 100));
+        copyrightPanel.add(copyrightLabel);
+
         // Add components to frame
-        add(formPanel, BorderLayout.CENTER);
-        add(lblImage, BorderLayout.EAST);
-        add(buttonPanel, BorderLayout.SOUTH);
+        add(welcomePanel, BorderLayout.NORTH);
+        
+        // Center panel to hold form and image preview
+        JPanel centerPanel = new JPanel(new BorderLayout(20, 0));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+        centerPanel.add(formPanel, BorderLayout.CENTER);
+        centerPanel.add(imagePreviewPanel, BorderLayout.EAST);
+        add(centerPanel, BorderLayout.CENTER);
+        
+        // South panel to hold buttons and copyright
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.add(buttonPanel, BorderLayout.CENTER);
+        southPanel.add(copyrightPanel, BorderLayout.SOUTH);
+        add(southPanel, BorderLayout.SOUTH);
         
         // Add action listeners
         addActionListeners();
@@ -93,11 +180,76 @@ public class StudentRegSystem extends JFrame {
         setLocationRelativeTo(null);
     }
     
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        
+        // Add hover effect
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(brightenColor(bgColor));
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
+    }
+    
+    private JLabel createStyledLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Arial", Font.BOLD, 12));
+        label.setForeground(new Color(70, 70, 70));
+        return label;
+    }
+    
+    private JTextField createStyledTextField() {
+        JTextField field = new JTextField();
+        field.setFont(new Font("Arial", Font.PLAIN, 12));
+        
+        Border defaultBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
+        
+        Border focusBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(51, 153, 255)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
+        
+        field.setBorder(defaultBorder);
+        
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                field.setBorder(focusBorder);
+            }
+            
+            @Override
+            public void focusLost(FocusEvent e) {
+                field.setBorder(defaultBorder);
+            }
+        });
+        
+        return field;
+    }
+    
     private void addActionListeners() {
         btnRegister.addActionListener(e -> registerParticipant());
         btnSearch.addActionListener(e -> searchParticipant());
         btnUpdate.addActionListener(e -> updateParticipant());
         btnDelete.addActionListener(e -> deleteParticipant());
+        btnViewAll.addActionListener(e -> openParticipantList());
         btnClear.addActionListener(e -> clearForm());
         btnExit.addActionListener(e -> System.exit(0));
         btnBrowse.addActionListener(e -> browseImage());
@@ -115,10 +267,34 @@ public class StudentRegSystem extends JFrame {
         }
     }
     
+    private Color brightenColor(Color color) {
+        float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+        return Color.getHSBColor(hsb[0], Math.max(0f, hsb[1] - 0.1f), Math.min(1f, hsb[2] + 0.1f));
+    }
+
     private void displayImage(String path) {
-        ImageIcon imageIcon = new ImageIcon(path);
-        Image image = imageIcon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
-        lblImage.setIcon(new ImageIcon(image));
+        if (path != null && !path.isEmpty()) {
+            ImageIcon imageIcon = new ImageIcon(path);
+            Image image = imageIcon.getImage();
+            if (image != null) {
+                // Calculate scaled dimensions while maintaining aspect ratio
+                int originalWidth = image.getWidth(null);
+                int originalHeight = image.getHeight(null);
+                if (originalWidth > 0 && originalHeight > 0) {
+                    int targetSize = 250;
+                    double scale = Math.min((double) targetSize / originalWidth, (double) targetSize / originalHeight);
+                    int scaledWidth = (int) (originalWidth * scale);
+                    int scaledHeight = (int) (originalHeight * scale);
+                    
+                    image = image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+                    lblImage.setIcon(new ImageIcon(image));
+                    lblImage.setText(""); // Clear the "No Image Selected" text
+                }
+            }
+        } else {
+            lblImage.setIcon(null);
+            lblImage.setText("No Image Selected");
+        }
     }
     
     private boolean validateInput() {
@@ -161,11 +337,13 @@ public class StudentRegSystem extends JFrame {
                 pstmt.setString(7, txtImagePath.getText());
                 
                 pstmt.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Participant registered successfully!");
+                showSuccessMessage("Registration Successful!", 
+                    "Welcome aboard! Your innovative project has been successfully registered.\n" +
+                    "Get ready to showcase your brilliance at the VU Exhibition!");
                 clearForm();
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            showErrorDialog("Registration Error", "Unable to register participant: " + ex.getMessage());
         }
     }
     
@@ -256,6 +434,53 @@ public class StudentRegSystem extends JFrame {
         }
     }
     
+    private void showSuccessMessage(String title, String message) {
+        JDialog dialog = new JDialog(this, title, true);
+        dialog.setLayout(new BorderLayout());
+        
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(new Color(46, 204, 113));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel iconLabel = new JLabel("✓");
+        iconLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        iconLabel.setForeground(Color.WHITE);
+        iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        JTextArea messageArea = new JTextArea(message);
+        messageArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        messageArea.setForeground(Color.WHITE);
+        messageArea.setBackground(new Color(46, 204, 113));
+        messageArea.setEditable(false);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setLineWrap(true);
+        messageArea.setOpaque(false);
+        
+        panel.add(iconLabel, BorderLayout.NORTH);
+        panel.add(messageArea, BorderLayout.CENTER);
+        
+        JButton okButton = createStyledButton("OK", new Color(255, 255, 255));
+        okButton.setForeground(new Color(46, 204, 113));
+        okButton.addActionListener(e -> dialog.dispose());
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(new Color(46, 204, 113));
+        buttonPanel.add(okButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+    
+    private void showErrorDialog(String title, String message) {
+        JOptionPane.showMessageDialog(this,
+            message,
+            title,
+            JOptionPane.ERROR_MESSAGE);
+    }
+    
     private void clearForm() {
         txtRegId.setText("");
         txtName.setText("");
@@ -265,6 +490,11 @@ public class StudentRegSystem extends JFrame {
         txtEmail.setText("");
         txtImagePath.setText("");
         lblImage.setIcon(null);
+    }
+    
+    private void openParticipantList() {
+        ParticipantListViewer viewer = new ParticipantListViewer();
+        viewer.setVisible(true);
     }
     
     public static void main(String[] args) {
